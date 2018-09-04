@@ -8,6 +8,10 @@ systemctl  enable docker.service
 sudo curl -L https://github.com/docker/compose/releases/download/1.17.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
+## 如果太慢使用国内镜像
+curl -L https://get.daocloud.io/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
 #第二种方法
 yum -y install epel-release
 yum -y install python-pip
@@ -119,9 +123,10 @@ git clone https://github.com/AprilOneDay/docker.git
 cd docker
 docker-compose up
 docker exec -it php /bin/bash
-chmod -R 777 /var/www/html/data
-chmod -R 777 /var/www/html/public/uploadfile
+chmod -R 777 /var/www/html/dati/data
+chmod -R 777 /var/www/html/dati/public
 
+# 删除正在进行的容器
 docker ps | awk  '{print $1}' | xargs docker stop
 docker rm $(docker ps -a -q)
 cd
@@ -132,9 +137,9 @@ docker exec -it nginx /bin/bash
 
 # 修改写入权限
 docker exec -it php /bin/bash
-chmod -R 777 /var/www/html/data
-chmod -R 777 /var/www/html/public/uploadfile
-chmod -R 777 /var/www/html/appliaction/admin/tools/var
+chmod -R 777 /var/www/html/banxing/data
+chmod -R 777 /var/www/html/banxing/public
+
 exit
 
 # 修改mysql密码
@@ -149,6 +154,7 @@ docker restart nginx;
 
 docker-compose up -d
 docker exec -it mysql /bin/bash
+docker exec -it svn /bin/sh
 mysqldump -hlocalhost -usiyue -psiyue1q2w3e4r --databases blog > /usr/local/work/blog.sql
 
 cd docker 
@@ -162,6 +168,9 @@ CHANGE MASTER TO MASTER_HOST='74.121.150.93',MASTER_USER='siyue',MASTER_PASSWORD
 
 俺的centos vps上面不知道添加了多少个账户，今天想清理一下，但是以前还未查看过linux用户列表，google了一下，找到方便的放：
 一般情况下是
+
+# 容器互连
+docker run -it --rm --network mynetwork svn
 
 cat /etc/passwd 可以查看所有用户的列表
 w 可以查看当前活跃的用户列表
@@ -238,3 +247,21 @@ if [  -f "${project_path}/del.sh" ];then
 	rm -rf ${project_path}/del.sh
 fi
 
+
+IPv4 forwarding is disabled. Networking will not work
+
+vi  /usr/lib/sysctl.d/00-system.conf
+增加 net.ipv4.ip_forward=1
+systemctl restart network systemctl restart docker
+
+
+# 本地Curl
+D:\phpStudy\php\php-5.6.27-nts\php-cgi.exe -b 127.0.0.1:9001 -c D:\phpStudy\php\php-5.6.27-nts\php.ini
+
+
+curl -O https://launchpadlibrarian.net/165454254/libmemcached-1.0.18.tar.gz 
+tar zxvf libmemcached-1.0.18.tar.gz
+mv libmemcached-1.0.18 memcached
+cd memcached
+./configure --with-memcached --disable-memcached-sasl
+make  &&  make install

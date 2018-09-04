@@ -3,6 +3,7 @@
     mysql:
         # image: mysql:5.7
         build: ./mysql/
+        container_name: mysql
         restart: always
         privileged: true
         ports:
@@ -13,7 +14,6 @@
             - ./mysql/log/:/var/log/mysql/:rw
         environment:
             MYSQL_ROOT_PASSWORD: "1qq2ww3ee4rr"
-        container_name: mysql
     # mysql主重备份
     # mysqlsrv:
     #     # image: mysql:5.7
@@ -31,25 +31,26 @@
     #     container_name: mysqlsrv
     jenkins:
         build: ./jenkins/
+        container_name: jenkins
         restart: always
         privileged: true
+        links:
+            - svn:svn
         ports:
             - "8080:8080"
             - "50000:50000"
         volumes:
             - ./jenkins/src:/var/jenkins_home:rw
-        container_name: jenkins
-        links:
-            - svn:svn
+            # - ./src/:/var/jenkins_home/workspace:rw
     svn:
         image: garethflowers/svn-server
+        container_name: svn
         restart: always
         privileged: true
         ports:
             - "3690:3690"
         volumes:
             - ./svn/src:/var/opt/svn:rw
-        container_name: svn
     php:
         #depends_on:
         #    - mysql
@@ -59,11 +60,12 @@
         privileged: true
         links:
             - mysql:mysql
+            - redis:redis
         volumes:
             - ./src/:/var/www/html/:rw
-            - ./src/data:/var/www/html/data:rw
             - ./php/php-fpm.d/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
-            - ./php/log/:/var/log/php-fpm/:rw
+            - ./php/log/:/var/log:rw
+            - ./php/etc/crontab:/etc/crontab:rw
         expose:
             - "9000"        
     nginx:
@@ -75,7 +77,6 @@
             - php:php
         volumes:
             - ./src/:/var/www/html/:rw
-            - ./src/data:/var/www/html/data:rw
             - ./nginx/conf/nginx.conf:/etc/nginx/nginx.conf
             - ./nginx/conf/conf.d/:/etc/nginx/conf.d/
             - ./nginx/conf/ssl/:/etc/nginx/ssl/
@@ -83,6 +84,24 @@
         ports:
             - "443:443"
             - "80:80"
+            - "81:81"
+    redis:
+        build: ./redis/
+        container_name: redis
+        restart: always
+        privileged: true
+        command: redis-server --appendonly yes --requirepass "11QQ22ww33ee44rr~@#"
+        volumes:
+            - ./redis/data:/data:rw
+        ports:
+            - "6379:6379"
+    memcached:
+        build: ./memcached/
+        container_name: memcached
+        restart: always
+        privileged: true
+        ports:
+            - "11211:11211"
 
     
             
